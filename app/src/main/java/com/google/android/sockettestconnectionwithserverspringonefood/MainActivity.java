@@ -10,6 +10,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -33,8 +34,11 @@ public class MainActivity extends AppCompatActivity {
     Button btnSend;
     EditText edt;
     ListView listView;
+    TextView textView;
     List<String> stringList=new ArrayList<>();
     ArrayAdapter adapter;
+   // String userID = "17";
+    String userID = "1";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
          btnSend = findViewById(R.id.btnSend);
          edt = findViewById(R.id.edtContent);
          listView = findViewById(R.id.listView);
+        textView = findViewById(R.id.textViewUser);
 
         adapter= new ArrayAdapter<String>(this, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, stringList );
         listView.setAdapter(adapter);
@@ -96,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
         socket.on(Socket.EVENT_DISCONNECT, this.onDisconnectEvent);
         socket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
         socket.on("send", this.onSendEvent);
+        socket.on("register", this.onRegisterEvent);
         socket.connect();
     }
 
@@ -105,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
 
             String jsonString = args[0].toString();
             stringList.add(0,jsonString);
-            Log.e(TAG, "onSend" + jsonString);
+            Log.e(TAG, "onSend : " + jsonString);
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -116,10 +122,34 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    private Emitter.Listener onRegisterEvent = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+
+            String jsonString = args[0].toString();
+
+            Log.e(TAG, "onRegister : " + jsonString);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    textView.setText(jsonString);
+                }
+            });
+
+        }
+    };
+
     private Emitter.Listener onConnectEvent = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
             Log.e(TAG, "connected to sever");
+
+            socket.emit("register", userID, new Ack(){
+                @Override
+                public void call(Object... args) {
+                    Log.e(TAG, "send userID "+userID+" to register");
+                }
+            });
         }
     };
 
